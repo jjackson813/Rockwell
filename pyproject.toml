@@ -5,6 +5,7 @@ description = "Render a Twitter-like feed to track user interactions and gather 
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "rockwell"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
