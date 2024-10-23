@@ -1,0 +1,53 @@
+# Stage 1: Build Frontend
+FROM node:16.13.0 AS build
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+COPY package.json /usr/src/app
+
+RUN npm install
+
+COPY . /usr/src/app
+RUN npm run build -y
+
+FROM nginx:alpine
+COPY --from=build /usr/src/app/build /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+# Stage 2: Build Backend with pyproject.toml (Poetry)
+FROM python:3.11-slim as backend-builder
+
+# Install Poetry
+RUN pip install poetry
+
+# Set the working directory
+WORKDIR /rockwell/backend
+
+# Copy pyproject.toml and poetry.lock (if available) first to leverage Docker cache
+COPY backend/pyproject.toml backend/poetry.lock* ./
+
+# Install dependencies without creating a virtual environment
+RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi
+
+# Copy the rest of the backend code
+COPY backend/ ./
+
+# Stage 3: Final Image
+FROM python:3.11-slim
+WORKDIR /app
+
+# Copy the backend build
+COPY --from=backend-builder /backend /app/backend
+
+# Copy the frontend build to the backend's static folder
+COPY --from=frontend-builder /frontend/build /app/backend/static
+
+# Expose backend port (adjust if needed)
+EXPOSE 8000
+
+# Command to run the backend (e.g., FastAPI with Uvicorn)
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+
+
