@@ -1,53 +1,46 @@
-# Stage 1: Build Frontend
+# Stage 1: Build Node.js application
 FROM node:16.13.0 AS build
+
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
-COPY package.json /usr/src/app
 
+COPY package.json /usr/src/app
 RUN npm install
 
 COPY . /usr/src/app
 RUN npm run build -y
 
+
+# Stage 2: Set up Python environment
+FROM python:3.8.10 AS python
+
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+COPY setup.py /usr/src/app
+COPY README.md /usr/src/app
+COPY Rockwell.egg-info /usr/src/app
+RUN pip install -e .
+
+RUN apt-get update && apt-get install -y supervisor
+RUN mkdir -p /var/log/supervisor
+
+# Stage 3: Final image with both frontend (Node.js/Nginx) and backend (Python/Supervisor)
 FROM nginx:alpine
+
+# Copy the build of the Node.js app from the build stage
 COPY --from=build /usr/src/app/build /usr/share/nginx/html
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Set up Supervisor to manage both Nginx (for the frontend) and the Python app (backend)
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Stage 2: Build Backend with pyproject.toml (Poetry)
-FROM python:3.11-slim as backend-builder
+# Copy Python app files
+COPY --from=python /usr/src/app /usr/src/app
 
-# Install Poetry
-RUN pip install poetry
+# Expose the ports for Nginx and your Python app (assuming Python app runs on port 8000)
+EXPOSE 80 8000
 
-# Set the working directory
-WORKDIR /rockwell/backend
-
-# Copy pyproject.toml and poetry.lock (if available) first to leverage Docker cache
-COPY backend/pyproject.toml backend/poetry.lock* ./
-
-# Install dependencies without creating a virtual environment
-RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi
-
-# Copy the rest of the backend code
-COPY backend/ ./
-
-# Stage 3: Final Image
-FROM python:3.11-slim
-WORKDIR /app
-
-# Copy the backend build
-COPY --from=backend-builder /backend /app/backend
-
-# Copy the frontend build to the backend's static folder
-COPY --from=frontend-builder /frontend/build /app/backend/static
-
-# Expose backend port (adjust if needed)
-EXPOSE 8000
-
-# Command to run the backend (e.g., FastAPI with Uvicorn)
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
+# Start both Nginx and Python app using Supervisor
+CMD ["/usr/bin/supervisord"]
 
 
