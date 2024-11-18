@@ -1,26 +1,21 @@
 version: "3"
 services:
-        frontend:
-                container_name: frontend
+        rockwell:
+                container_name: rockwell
                 build:
-                        context: ./frontend
+                        context: .
                         dockerfile: Dockerfile
                 ports:
                         - 80:80
                         - 443:443
+                        - 5000:5000
+                        - 5050:5050
+                        - 5051:5051
+                        - 5052:5052
                 volumes:
                         - /home/ubuntu/ssl:/etc/nginx/certs
-        backend:
+                        - .:/usr/src/app
                 restart: always
-                container_name: backend
-                build: 
-                        context: ./backend
-                        dockerfile: Dockerfile
-                expose:
-                        - 5000
-                        - 5050
-                        - 5051
-                        - 5052
         database:
                 postgres:
                         image: postgres:15-alpine
