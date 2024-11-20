@@ -13,7 +13,6 @@ services:
                         - 5051:5051
                         - 5052:5052
                 volumes:
-                        - /home/ubuntu/ssl:/etc/nginx/certs
                         - .:/usr/src/app
                 restart: always
         database:

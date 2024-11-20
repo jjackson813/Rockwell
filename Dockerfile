@@ -1,46 +1,19 @@
-# Stage 1: Build Node.js application
-FROM node:16.13.0 AS build
+# Stage 1: Frontend Builder Stage
+FROM node:16.13.0 AS Builder1
+WORKDIR /app/rockwell/frontend
+COPY frontend/package*.json ./
+RUN npm ci
 
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+# Stage 2: Backend Builder Stage
+FROM python:3.12 as Builder2
 
-COPY package.json /usr/src/app
-RUN npm install
+ENV PIP_REQUESTS_TIMEOUT=300 \
+    POETRY_REQUESTS_TIMEOUT=300 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \ 
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
 
-COPY . /usr/src/app
-RUN npm run build -y
+WORKDIR /app/rockwell/backend
 
-
-# Stage 2: Set up Python environment
-FROM python:3.8.10 AS python
-
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-COPY setup.py /usr/src/app
-COPY README.md /usr/src/app
-COPY Rockwell.egg-info /usr/src/app
-RUN pip install -e .
-
-RUN apt-get update && apt-get install -y supervisor
-RUN mkdir -p /var/log/supervisor
-
-# Stage 3: Final image with both frontend (Node.js/Nginx) and backend (Python/Supervisor)
-FROM nginx:alpine
-
-# Copy the build of the Node.js app from the build stage
-COPY --from=build /usr/src/app/build /usr/share/nginx/html
-
-# Set up Supervisor to manage both Nginx (for the frontend) and the Python app (backend)
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Copy Python app files
-COPY --from=python /usr/src/app /usr/src/app
-
-# Expose the ports for Nginx and your Python app (assuming Python app runs on port 8000)
-EXPOSE 80 8000
-
-# Start both Nginx and Python app using Supervisor
-CMD ["/usr/bin/supervisord"]
-
-
+# Stage 3: Merging Final Components Runtime Stage
