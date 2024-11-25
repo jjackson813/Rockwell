@@ -1,5 +1,5 @@
 # Stage 1: Frontend Builder Stage
-FROM node:16.13.0-alphine AS Builder1
+FROM node:16.13.0-alpine AS Builder1
 WORKDIR /app/rockwell/frontend
 COPY frontend/package*.json ./
 RUN npm ci
