@@ -15,7 +15,7 @@ ENV PIP_REQUESTS_TIMEOUT=300 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
 WORKDIR /app/rockwell/backend
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml poetry.lock rockwell/backend/src ./ 
 
 RUN pip install poetry \
     && poetry install --only=main --no-root --no-directory \
