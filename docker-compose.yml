@@ -7,9 +7,34 @@ services:
                         dockerfile: Dockerfile
                 ports:
                         - "5001:5001"
+                depends_on:
+                        - authweb
                 #volumes:
                         #- .:/usr/src/app
                 command: ["poetry", "run", "python", "engagements/Retweet.py"]
+        rockwell-authweb:
+                container_name: rockwell-authweb
+                build:
+                        context: .
+                        dockerfile: Dockerfile
+                ports:
+                        - "5002:5001"
+                #depends_on:
+                 #       - serviceName
+                command: ["poetry", "run", "python", "authorizer/twauth-web.py"]
+        #rockwell-authwebv2:
+        #        container_name: rockwell-authwebv2
+        #        build:
+        #                context: .
+        #                dockerfile: Dockerfile
+        #        ports:
+        #                - "5003:5001"
+        #        command: ["poetry", "run", "python", "authorizer/twauth-webv2.py"]
+        #rockwell-dbaccess:
+        #       container_name: rockwell-dbaccess
+        #      build:
+        #                context: .
+        #                dockerfile: Dockerfile
         database:
                 image: postgres:15.7-alpine
                 ports:
