@@ -1,4 +1,3 @@
-version: "3"
 services:
         rockwell-retweet:
                 container_name: rockwell-retweet
