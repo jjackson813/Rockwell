@@ -1,11 +1,11 @@
 # Stage 1: Frontend Builder Stage
-FROM node:16.13.0-alpine AS builder1
+FROM node:16.13.0-alpine AS frontend-build
 WORKDIR /app/rockwell/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 
 # Stage 2: Backend Builder Stage
-FROM python:3.12-slim as builder2
+FROM python:3.12-slim
 
 ENV PIP_REQUESTS_TIMEOUT=300 \
     POETRY_REQUESTS_TIMEOUT=300 \
@@ -20,5 +20,7 @@ COPY pyproject.toml poetry.lock rockwell/backend/src ./
 RUN pip install poetry \
     && poetry install --only=main --no-root --no-directory \
     && rm -rf ${POETRY_CACHE_DIR}
+
+EXPOSE 5000
 
 # Stage 3: Merging Final Components Runtime Stage
