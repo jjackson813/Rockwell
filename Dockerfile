@@ -1,11 +1,11 @@
 # Stage 1: Frontend Builder Stage
-FROM node:16.13.0-alpine AS Builder1
+FROM node:16.13.0-alpine AS builder1
 WORKDIR /app/rockwell/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 
 # Stage 2: Backend Builder Stage
-FROM python:3.12-slim as Builder2
+FROM python:3.12-slim as builder2
 
 ENV PIP_REQUESTS_TIMEOUT=300 \
     POETRY_REQUESTS_TIMEOUT=300 \

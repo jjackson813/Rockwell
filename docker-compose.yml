@@ -7,7 +7,7 @@ services:
                 ports:
                         - "5001:5001"
                 depends_on:
-                        - authweb
+                        - rockwell-authweb
                 #volumes:
                         #- .:/usr/src/app
                 command: ["poetry", "run", "python", "engagements/Retweet.py"]
